@@ -1,5 +1,5 @@
 <h1 align="center">MediScan — AI Skin Disease Detection (Web + ML API)</h1>
-<img src="demo1.png" width="100%" alt="My Image">
+<img src="demo_.png" width="100%" alt="My Image">
 MediScan is an AI-powered project that predicts **skin diseases** from images using a deep learning model.
 It provides a modern web interface (Next.js) where users can upload an image and receive a predicted disease label along with confidence scores.
 
