@@ -7,7 +7,7 @@ It provides a modern web interface (Next.js) where users can upload an image and
 
 ## 🔥 Live Demo
 
-- **Frontend (Web):** [MediScan | Advanced Skin Disease Detection](Your_Vercel_Link_Here) *(Replace with your actual Vercel URL)*
+- **Frontend (Web):** [MediScan | Advanced Skin Disease Detection](https://ai-mediscan.vercel.app/) *(Replace with your actual Vercel URL)*
 - **ML API (Render):** [https://skin-disease-api-j0l8.onrender.com/predict/](https://skin-disease-api-j0l8.onrender.com/docs)
 
 ---
