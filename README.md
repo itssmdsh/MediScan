@@ -39,11 +39,12 @@ The current model predicts the following 6 classes:
 
 This repository is divided into 3 main parts:
 
-```text
+```
 MediScan/
 ├── web/           # Next.js frontend (v0 + Vercel)
 ├── ml-service/    # FastAPI backend deployed on Render
 └── ml-training/   # Kaggle notebook + training code (PyTorch)
+```
 Application Flow
 User uploads an image via the Web Frontend.
 
@@ -54,6 +55,7 @@ API loads the trained model and performs inference.
 API returns the predicted disease label and confidence scores.
 
 Frontend displays the diagnostic result to the user.
+```
 
 🖥️ Frontend (Web)
 📁 Folder: web/
@@ -74,6 +76,7 @@ Note: The Frontend UI was created with AI assistance using v0. The ML model trai
 Framework: FastAPI
 
 Deployment: Render
+```
 
 Logic: Downloads model weights (model.pth) and performs PyTorch inference.
 
@@ -83,7 +86,7 @@ URL: https://skin-disease-api-j0l8.onrender.com/predict/
 Method: POST
 
 Input: Image file (multipart/form-data)
-
+```
 Sample JSON Response
 JSON
 
@@ -102,7 +105,7 @@ JSON
 📁 Folder: ml-training/
 
 Framework: PyTorch
-
+```
 Architecture: Transfer Learning using ResNet18
 
 Environment: Trained on Kaggle Notebooks
