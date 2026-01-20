@@ -19,53 +19,7 @@
 
 ### High-Level Design (HLD)
 
-```mermaid
-graph TB
-    subgraph Client["🖥️ Client Layer"]
-        Browser["Web Browser"]
-        UI["Next.js Frontend<br/>React 19 + Tailwind"]
-    end
-    
-    subgraph Gateway["🔗 Gateway Layer"]
-        Route["API Route<br/>/api/analyze<br/>Validation + Proxy"]
-    end
-    
-    subgraph Backend["⚙️ ML Backend"]
-        FastAPI["FastAPI Server<br/>Async Handler"]
-        Model["ResNet18 Model<br/>6 Classes"]
-        Cache["Model Cache<br/>In-Memory"]
-    end
-    
-    subgraph External["📦 External"]
-        Dropbox["Dropbox<br/>Model Weights"]
-    end
-    
-    Browser -->|Image Upload| UI
-    UI -->|FormData| Route
-    Route -->|Validate<br/>4MB, 25s timeout| FastAPI
-    FastAPI -->|Load Model| Cache
-    Cache -->|Inference| Model
-    Model -->|Softmax| FastAPI
-    FastAPI -->|JSON| Route
-    Route -->|Transform| UI
-    UI -->|Display| Browser
-    Cache -.->|First Load| Dropbox
-    
-    style Client fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style Gateway fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Backend fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
-    style External fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Browser fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style UI fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style Route fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
-    style FastAPI fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Model fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Cache fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Dropbox fill:#ffcc80,stroke:#bf360c,stroke-width:3px,color:#000
-    
-    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#0d47a1,stroke-width:3px
-    linkStyle 9 stroke:#bf360c,stroke-width:3px
-```
+![HLD Architecture](hld_diagram.png)
 
 **Layer Responsibilities**:
 
@@ -80,64 +34,7 @@ graph TB
 
 #### 2.1 Frontend Architecture
 
-```mermaid
-graph LR
-    Page["page.tsx<br/>State Management"] -->|Props| ScanSection["ScanSection<br/>UI Container"]
-    ScanSection -->|onImageUpload| Uploader["ImageUploader<br/>Drag-Drop"]
-    Uploader -->|File| Validation["Validate<br/>JPEG/PNG/JPG"]
-    Validation -->|Valid| API["POST /api/analyze"]
-    API -->|Response| Transform["Transform<br/>0-1 → 0-100%"]
-    Transform -->|Results| Display["ResultsDisplay<br/>Color-Coded"]
-    Display -->|Render| Browser["User Sees<br/>Prediction + Bars"]
-    
-    style Page fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style ScanSection fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Uploader fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
-    style Validation fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style API fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Transform fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style Display fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Browser fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
-    
-    linkStyle 0,1,2,3,4,5,6 stroke:#0d47a1,stroke-width:3px
-```
-
-**Frontend Data Flow**:
-
-```mermaid
-graph TD
-    Main["page.tsx Main<br/>State: scanResult<br/>State: isLoading<br/>Func: handleImageUpload"]
-    Scan["ScanSection<br/>UI Container"]
-    Upload["ImageUploader<br/>validateAndUpload"]
-    Check{"MIME Check<br/>JPG/JPEG/PNG?"}
-    Valid["✅ Valid<br/>onImageUpload file"]
-    Invalid["❌ Invalid<br/>alert()"]
-    API["POST /api/analyze<br/>FormData + file"]
-    Response["API Response 200<br/>prediction + confidence"]
-    Transform["Transform<br/>0-1 → 0-100%"]
-    Display["ResultsDisplay<br/>Color-coded confidence"]
-    
-    Main --> Scan
-    Scan --> Upload
-    Upload --> Check
-    Check -->|Valid| Valid
-    Check -->|Invalid| Invalid
-    Valid --> API
-    API --> Response
-    Response --> Transform
-    Transform --> Display
-    
-    style Main fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style Scan fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Upload fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Check fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Valid fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Invalid fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style API fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style Response fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
-    style Transform fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Display fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
-```
+![LLD Design](lld_diagram.png)
 
 #### 2.2 API Route Handler
 
@@ -351,28 +248,7 @@ Body:
 
 ## 4. Validation & Security
 
-```mermaid
-graph TD
-    A["📤 File Upload"] -->|Client| B{"✓ MIME?"}
-    B -->|Yes| C["Preview"]
-    B -->|No| E["❌ Reject"]
-    C -->|Submit| D{"✓ Size ≤ 4MB?"}
-    D -->|Yes| F["🔐 FastAPI<br/>Process"]
-    D -->|No| E
-    F -->|Convert| G["RGB"]
-    G -->|Resize| H["224×224"]
-    H -->|Infer| I["✅ Result"]
-    
-    style A fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000
-    style B fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
-    style D fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
-    style C fill:#b2dfdb,stroke:#004d40,stroke-width:2px,color:#000
-    style E fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#000
-    style F fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000
-    style G fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
-    style H fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
-    style I fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
-```
+![Validation & Security Flow](validation_security_flow.png)
 
 **Validation Rules**:
 
