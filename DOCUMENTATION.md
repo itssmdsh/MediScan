@@ -4,123 +4,463 @@
 
 ---
 
-## 1. Overview
+## 1. Abstract
 
-| | |
+| Aspect | Details |
 |---|---|
-| **What** | Full-stack AI platform predicting 6 skin diseases from images |
-| **Users Get** | Instant disease prediction + confidence scores for each class |
-| **Tech** | Next.js Frontend + FastAPI ML Backend + ResNet18 Model |
-| **Status** | ✅ Production-ready (Vercel + Render) |
+| **What** | Full-stack AI platform predicting 6 skin diseases from images using ResNet18 deep learning |
+| **Why** | Users need accessible, fast preliminary skin disease detection with confidence metrics |
+| **Outcome** | Production-ready platform with Next.js frontend, FastAPI backend, CORS-protected API, 6-class prediction, ~87% accuracy |
+| **Status** | ✅ Live (Vercel + Render) |
 
 ---
 
-## 2. How It Works
+## 2. System Architecture
 
-```mermaid
-graph LR
-    User["👤 User"] -->|Uploads Image| Upload["📤 ImageUploader<br/>Drag & Drop"]
-    Upload -->|File + Validation| API["🔗 Next.js Route<br/>/api/analyze"]
-    API -->|Security Check<br/>4MB Limit| ML["⚙️ FastAPI<br/>/predict/"]
-    ML -->|ResNet18| Model["🧠 Deep Learning<br/>224×224 Input"]
-    Model -->|Softmax| Results["📊 Confidence %<br/>6 Classes"]
-    Results -->|JSON| Display["🎨 Results Display<br/>Color Bars"]
-    Display -->|Show Results| User
-```
-
-**The Journey**:
-1. 👤 User selects/drags image
-2. 🔗 Frontend validates (JPG/PNG)
-3. 📤 Sends to API route
-4. 🛡️ Route checks: JPEG/PNG/WebP + ≤4MB + 25s timeout
-5. ⚙️ FastAPI receives file
-6. 🧠 ResNet18 predicts (6 diseases)
-7. 📊 Returns confidence for each class
-8. 🎨 Frontend displays color-coded results
-
----
-
-## 3. Architecture at a Glance
+### High-Level Design (HLD)
 
 ```mermaid
 graph TB
-    FE["<b>Frontend Layer</b><br/>Next.js 15 + React 19<br/>Tailwind CSS + Shadcn UI"]
-    API["<b>API Gateway</b><br/>Next.js Route Handler<br/>Validation + Error Handling"]
-    ML["<b>ML Backend</b><br/>FastAPI + Uvicorn<br/>Async Inference"]
-    MODEL["<b>ResNet18 Model</b><br/>6 Disease Classification<br/>~87% Accuracy"]
+    subgraph Client["🖥️ Client Layer"]
+        Browser["Web Browser"]
+        UI["Next.js Frontend<br/>React 19 + Tailwind"]
+    end
     
-    FE -->|FormData| API
-    API -->|Forward| ML
-    ML -->|Predict| MODEL
-    MODEL -->|Confidence| ML
-    ML -->|JSON| API
-    API -->|Results| FE
+    subgraph Gateway["🔗 Gateway Layer"]
+        Route["API Route<br/>/api/analyze<br/>Validation + Proxy"]
+    end
     
-    style FE fill:#e1f5fe
-    style API fill:#f3e5f5
-    style ML fill:#f1f8e9
-    style MODEL fill:#fff3e0
+    subgraph Backend["⚙️ ML Backend"]
+        FastAPI["FastAPI Server<br/>Async Handler"]
+        Model["ResNet18 Model<br/>6 Classes"]
+        Cache["Model Cache<br/>In-Memory"]
+    end
+    
+    subgraph External["📦 External"]
+        Dropbox["Dropbox<br/>Model Weights"]
+    end
+    
+    Browser -->|Image Upload| UI
+    UI -->|FormData| Route
+    Route -->|Validate<br/>4MB, 25s timeout| FastAPI
+    FastAPI -->|Load Model| Cache
+    Cache -->|Inference| Model
+    Model -->|Softmax| FastAPI
+    FastAPI -->|JSON| Route
+    Route -->|Transform| UI
+    UI -->|Display| Browser
+    Cache -.->|First Load| Dropbox
+    
+    style Client fill:#e3f2fd
+    style Gateway fill:#f3e5f5
+    style Backend fill:#f1f8e9
+    style External fill:#fff3e0
+```
+
+**Layer Responsibilities**:
+
+| Layer | Component | Role |
+|---|---|---|
+| **Presentation** | Next.js + React | User interface, form handling, results display |
+| **Gateway** | Next.js Route Handler | CORS proxy, file validation, error handling |
+| **Inference** | FastAPI + PyTorch | Model loading, image preprocessing, prediction |
+| **Storage** | Dropbox | Model weights persistence |
+
+### Low-Level Design (LLD)
+
+#### 2.1 Frontend Architecture
+
+```mermaid
+graph LR
+    Page["page.tsx<br/>State Management"] -->|Props| ScanSection["ScanSection<br/>UI Container"]
+    ScanSection -->|onImageUpload| Uploader["ImageUploader<br/>Drag-Drop"]
+    Uploader -->|File| Validation["Validate<br/>JPEG/PNG/JPG"]
+    Validation -->|Valid| API["POST /api/analyze"]
+    API -->|Response| Transform["Transform<br/>0-1 → 0-100%"]
+    Transform -->|Results| Display["ResultsDisplay<br/>Color-Coded"]
+    Display -->|Render| Browser["User Sees<br/>Prediction + Bars"]
+```
+
+**Frontend Data Flow**:
+
+```
+┌─────────────────────────────────────┐
+│ page.tsx (Main)                     │
+│ - scanResult state                  │
+│ - isLoading state                   │
+│ - handleImageUpload()               │
+└──────────────┬──────────────────────┘
+               │
+        ┌──────▼──────┐
+        │  ScanSection │
+        └──────┬───────┘
+               │
+        ┌──────▼────────────┐
+        │ ImageUploader      │
+        │ validateAndUpload()│
+        └──────┬─────────────┘
+               │
+    ┌──────────▼──────────────┐
+    │ Check MIME Type         │
+    │ JPG/JPEG/PNG Allowed    │
+    └──────────┬──────────────┘
+               │
+               ├─ Valid → onImageUpload(file)
+               └─ Invalid → alert()
+                     │
+             ┌───────▼────────────────┐
+             │ POST /api/analyze      │
+             │ FormData with file     │
+             └───────┬────────────────┘
+                     │
+          ┌──────────▼──────────────┐
+          │ API Response (200)       │
+          │ {prediction, confidence}│
+          └──────────┬───────────────┘
+                     │
+          ┌──────────▼──────────────────┐
+          │ Transform Percentages       │
+          │ 0-1 range → 0-100 range    │
+          └──────────┬──────────────────┘
+                     │
+          ┌──────────▼──────────────┐
+          │ ResultsDisplay renders  │
+          │ Color-coded confidence  │
+          └────────────────────────┘
+```
+
+#### 2.2 API Route Handler
+
+```python
+# web_v0/app/api/analyze/route.ts
+
+export const maxDuration = 30
+export const dynamic = "force-dynamic"
+
+POST(request: NextRequest):
+  Step 1: Extract FormData
+    - Get file from request.formData()
+    - Check file exists else return 400
+
+  Step 2: Validate File Format
+    - Check MIME type ∈ [image/jpeg, image/png, image/webp]
+    - If invalid → return 400 "Only JPEG, PNG, or WEBP..."
+
+  Step 3: Validate File Size
+    - Check size ≤ 4 * 1024 * 1024 (4MB)
+    - If oversized → return 400 "Image must be smaller than 4MB"
+
+  Step 4: Create New FormData
+    - Wrap file in new FormData for external API
+    
+  Step 5: Timeout Protection
+    - Set AbortController with 25000ms (25s) timeout
+    
+  Step 6: Fetch from FastAPI
+    - POST to https://skin-disease-api-j0l8.onrender.com/predict/
+    - Pass signal (for abort on timeout)
+    - Catch AbortError → return 504 "Prediction timed out"
+    
+  Step 7: Validate Response
+    - Check response.ok
+    - Parse JSON
+    - Validate structure: { prediction, confidence_percentages }
+    - If invalid → throw error
+    
+  Step 8: Return Result
+    - NextResponse.json(result)
+    
+  Fallback (Development):
+    - If NODE_ENV === "development" → Return MOCK_RESPONSE
+```
+
+#### 2.3 FastAPI Backend
+
+```python
+# model_api/app/main.py
+
+Startup Phase:
+  ├─ Check if model.pth exists
+  ├─ If not → download_model_from_dropbox()
+  │  └─ Download from Dropbox URL
+  │     Save to ./model.pth
+  └─ Load model into memory (cached)
+
+Model Loading:
+  ├─ ResNet18(pretrained=False)
+  ├─ Replace FC layer: 512 → 6 (disease classes)
+  ├─ Load weights from model.pth
+  ├─ Set to eval mode
+  └─ Move to CPU (optimized for inference)
+
+Image Transform Pipeline:
+  ├─ Resize to (224, 224)
+  ├─ Convert to Tensor
+  └─ Normalize with ImageNet stats:
+     mean=[0.485, 0.456, 0.406]
+     std=[0.229, 0.224, 0.225]
+
+@app.post("/predict/")
+async def predict(file: UploadFile):
+  Step 1: Open Image
+    - PIL Image.open(file.file).convert("RGB")
+    - Ensures 3-channel RGB regardless of input
+    
+  Step 2: Apply Transforms
+    - image = transform(image)
+    - Add batch dimension: unsqueeze(0)
+    - Shape: [1, 3, 224, 224]
+    
+  Step 3: Forward Pass
+    - with torch.no_grad():
+        outputs = model(image)
+        probabilities = F.softmax(outputs, dim=1)
+        
+  Step 4: Get Prediction
+    - _, predicted = torch.max(probabilities, 1)
+    - prediction = class_names[predicted.item()]
+    
+  Step 5: Extract Confidences
+    - For each class:
+      confidence = probabilities[0][i].item() * 100
+      Round to 2 decimals
+      
+  Step 6: Return JSON
+    - {
+        "prediction": "Eczema",
+        "confidence_percentages": {
+          "Acne": 5.2,
+          "Eczema": 82.34,
+          ...
+        }
+      }
+```
+
+#### 2.4 Image Processing Pipeline
+
+```mermaid
+graph LR
+    Raw["Raw Image<br/>JPEG/PNG/WebP"] -->|PIL Open| RGB["Convert RGB<br/>3-Channel"]
+    RGB -->|Resize| Size["224×224<br/>Fixed Size"]
+    Size -->|ToTensor| Tensor["Normalize<br/>ImageNet Stats"]
+    Tensor -->|Add Batch| Batch["[1,3,224,224]<br/>Ready for Model"]
+    Batch -->|ResNet18| Model["Feature Maps<br/>→ FC Layer"]
+    Model -->|Softmax| Probs["Probabilities<br/>0-1 range"]
+    Probs -->|×100| Percent["Percentages<br/>0-100 range"]
+    Percent -->|Return| JSON["JSON Response<br/>6 Classes"]
+    
+    style Raw fill:#fff3e0
+    style RGB fill:#fff3e0
+    style Size fill:#fff3e0
+    style Tensor fill:#f1f8e9
+    style Batch fill:#f1f8e9
+    style Model fill:#e8f5e9
+    style Probs fill:#e3f2fd
+    style Percent fill:#e3f2fd
+    style JSON fill:#f3e5f5
+```
+
+#### 2.5 Component Interaction Diagram
+
+```mermaid
+graph TD
+    ImageUploader["📤 ImageUploader<br/>Drag-Drop Handler"]
+    
+    ImageUploader -->|validateAndUpload| LocalCheck{"Valid<br/>Format?"}
+    LocalCheck -->|Yes| DisplayPreview["Show Image<br/>Preview"]
+    LocalCheck -->|No| ShowAlert["Alert User<br/>Invalid Format"]
+    
+    DisplayPreview -->|User Confirms| APICall["POST /api/analyze<br/>FormData"]
+    
+    APICall -->|Route Handler| FileValidation{"File Check<br/>Size/Type"}
+    FileValidation -->|Pass| ForwardAPI["Forward to<br/>/predict/"]
+    FileValidation -->|Fail| Return400["Return 400<br/>Error Message"]
+    
+    ForwardAPI -->|Timeout 25s| TimeoutCheck{"Completed<br/>in Time?"}
+    TimeoutCheck -->|Yes| Inference["ResNet18<br/>Inference"]
+    TimeoutCheck -->|No| Return504["Return 504<br/>Timeout Error"]
+    
+    Inference -->|Success| ReturnJSON["Return JSON<br/>Prediction + Confidence"]
+    
+    ReturnJSON -->|Front| Transform["Transform<br/>0-1 → 0-100%"]
+    Return400 -->|Front| ShowError["Show Error<br/>Alert"]
+    Return504 -->|Front| ShowError
+    
+    Transform -->|setState| Display["ResultsDisplay<br/>Color-Coded Bars"]
+    Display -->|render| Browser["🖥️ User Sees<br/>Results"]
+    ShowError -->|render| Browser
 ```
 
 ---
 
-## 4. Request Flow (Visual)
+## 3. Data Structures & API Contracts
+
+### Request/Response Format
+
+**Frontend → Next.js API**:
+```
+POST /api/analyze
+Content-Type: multipart/form-data
+
+Body:
+  file: <binary image data>
+  Size: ≤ 4MB
+  Type: JPEG, PNG, or WebP
+```
+
+**Next.js API → FastAPI**:
+```
+POST https://skin-disease-api-j0l8.onrender.com/predict/
+Content-Type: multipart/form-data
+
+Body:
+  file: <binary image data>
+  (Same file from request)
+```
+
+**FastAPI → Next.js API**:
+```json
+{
+  "prediction": "Eczema",
+  "confidence_percentages": {
+    "Acne": 5.2,
+    "Eczema": 82.34,
+    "Psoriasis": 8.1,
+    "Warts": 2.3,
+    "SkinCancer": 1.5,
+    "Unknown_Normal": 0.63
+  }
+}
+```
+
+**Next.js API → Frontend**:
+```json
+{
+  "prediction": "Eczema",
+  "confidence_percentages": {
+    "Acne": 5.2,
+    "Eczema": 82.34,
+    "Psoriasis": 8.1,
+    "Warts": 2.3,
+    "SkinCancer": 1.5,
+    "Unknown_Normal": 0.63
+  }
+}
+```
+
+### Error Response Format
+
+```json
+{
+  "error": "Error message",
+  "details": "Optional additional context"
+}
+```
+
+**Possible Errors**:
+| Code | Error Message | Cause |
+|---|---|---|
+| 400 | "No file uploaded" | Missing file in request |
+| 400 | "Only JPEG, PNG, or WEBP..." | Invalid MIME type |
+| 400 | "Image must be smaller than 4MB" | File exceeds limit |
+| 504 | "Prediction timed out (25s limit)" | API exceeded timeout |
+| 500 | "Server error: fetch failed" | Network/API error |
+
+---
+
+## 4. Validation & Security
 
 ```mermaid
-sequenceDiagram
-    participant User as User Browser
-    participant FE as Frontend (Next.js)
-    participant Route as API Route
-    participant Render as FastAPI (Render)
-    participant Model as ResNet18
+graph TD
+    Upload["File Upload"] -->|Step 1| LocalValidate["Client-Side Validation<br/>ImageUploader Component"]
+    LocalValidate -->|MIME Check| AllowedMIME1{"JPEG/PNG/JPG?"}
+    AllowedMIME1 -->|Yes| Preview["Show Preview"]
+    AllowedMIME1 -->|No| Reject1["Alert & Reject"]
     
-    User->>FE: Selects Image
-    FE->>FE: Validate (JPG/PNG)
-    FE->>Route: POST /api/analyze
-    Route->>Route: Check MIME + Size
-    Route->>Render: Forward to /predict/
-    Render->>Model: Load & Infer
-    Model->>Render: Probabilities
-    Render->>Route: { prediction, confidence_% }
-    Route->>FE: JSON Response
-    FE->>FE: Format (0-1 to 0-100%)
-    FE->>User: Display Results
+    Preview -->|Submit| Step2["Step 2: API Route<br/>Server-Side Validation"]
+    Reject1 -.->|End| User["❌ User"]
+    
+    Step2 -->|Exists| FileCheck{"File Exists?"}
+    FileCheck -->|No| Reject2["400: No file"]
+    
+    FileCheck -->|Yes| MIMECheck{"MIME Type<br/>JPEG/PNG/WebP?"}
+    MIMECheck -->|No| Reject3["400: Invalid MIME"]
+    
+    MIMECheck -->|Yes| SizeCheck{"Size ≤ 4MB?"}
+    SizeCheck -->|No| Reject4["400: Too large"]
+    
+    SizeCheck -->|Yes| Step3["Step 3: FastAPI<br/>Auto-Processing"]
+    Reject2 -.->|End| User
+    Reject3 -.->|End| User
+    Reject4 -.->|End| User
+    
+    Step3 -->|Convert| RGB["Convert to RGB<br/>3-channel"]
+    RGB -->|Resize| Normalize["224×224<br/>+ Normalize"]
+    Normalize -->|Ready| Model["ResNet18<br/>Inference"]
+    Model -->|Result| Success["✅ Confidence %"]
+    Success -->|Return| User
+    
+    style AllowedMIME1 fill:#c8e6c9
+    style FileCheck fill:#c8e6c9
+    style MIMECheck fill:#c8e6c9
+    style SizeCheck fill:#c8e6c9
+    style Reject1 fill:#ffcdd2
+    style Reject2 fill:#ffcdd2
+    style Reject3 fill:#ffcdd2
+    style Reject4 fill:#ffcdd2
+    style Reject4 fill:#ffcdd2
+    style Success fill:#c8e6c9
 ```
+
+**Validation Rules**:
+
+| Layer | Rule | Action |
+|---|---|---|
+| **Client** | MIME: JPEG/PNG/JPG | Alert on invalid |
+| **API Route** | File exists | Return 400 |
+| **API Route** | MIME: JPEG/PNG/WebP | Return 400 |
+| **API Route** | Size ≤ 4MB | Return 400 |
+| **API Route** | Timeout 25s | Return 504 |
+| **FastAPI** | Convert RGB | Auto-handle |
+| **FastAPI** | Resize 224×224 | Auto-handle |
+| **FastAPI** | Normalize | Auto-handle |
 
 ---
 
 ## 5. Key Components
 
-### 📤 Image Uploader
-- **What**: Drag-drop file input
-- **Validates**: JPG, JPEG, PNG
-- **Shows**: Image preview with clear button
+### 📤 Image Uploader Component
 - **File**: `web_v0/components/image-uploader.tsx`
+- **Validates**: JPG, JPEG, PNG
+- **Features**: Drag-drop, click upload, preview, clear button
+- **Max Size**: 10MB (frontend hint, API enforces 4MB)
 
-### 📊 Results Display
-- **What**: Shows prediction + confidence bars
-- **Color Code**: 
+### 📊 Results Display Component
+- **File**: `web_v0/components/results-display.tsx`
+- **Shows**: Prediction + confidence bars for all 6 diseases
+- **Color Coding**: 
   - 🟢 Green: Healthy (Unknown_Normal >80%)
   - 🔴 Red: Disease detected (>80%)
-  - 🟡 Yellow: Moderate confidence (>40%)
+  - 🟡 Yellow: Moderate (>40%)
   - ⚫ Gray: Low confidence
-- **File**: `web_v0/components/results-display.tsx`
+- **Sorting**: By confidence (highest first)
 
-### 🔗 API Route
-- **Endpoint**: `/api/analyze`
-- **Purpose**: CORS proxy + validation
+### 🔗 API Route Handler
+- **Endpoint**: `POST /api/analyze`
+- **Purpose**: CORS proxy + validation gateway
 - **Limits**: 4MB file, 25s timeout
 - **File**: `web_v0/app/api/analyze/route.ts`
 
-### ⚙️ ML Backend
-- **Endpoint**: `/predict/`
-- **Model**: ResNet18 (6 classes)
+### ⚙️ ML Backend Service
+- **Endpoint**: `POST /predict/`
+- **Model**: ResNet18 (6-class classifier)
 - **Accuracy**: ~87% on test dataset
 - **File**: `model_api/app/main.py`
+- **Host**: Render.com (containerized)
 
 ---
 
-## 6. What Gets Predicted?
+## 6. Disease Classes & Prediction
 
 ```mermaid
 pie title 6 Disease Classes Detected
@@ -132,79 +472,67 @@ pie title 6 Disease Classes Detected
     "Unknown/Normal" : 16.67
 ```
 
-| Disease | What It Is | Our Model Does |
-|---|---|---|
-| 🔴 **Acne** | Bacterial inflammation | Identifies pimples/blackheads |
-| 🔴 **Eczema** | Inflamed skin condition | Detects red/dry patches |
-| 🔴 **Psoriasis** | Autoimmune disorder | Spots thick scaly patches |
-| 🔴 **Warts** | Viral infection (HPV) | Finds raised bumps |
-| ⚠️ **SkinCancer** | Malignant growth | Alerts to suspicious lesions |
-| 🟢 **Unknown/Normal** | Healthy skin | Confirms no visible issues |
+| Disease | Category | Model Detects | Output |
+|---|---|---|---|
+| 🔴 **Acne** | Bacterial/Inflammatory | Pimples, blackheads | Confidence % |
+| 🔴 **Eczema** | Inflammatory | Red, dry patches | Confidence % |
+| 🔴 **Psoriasis** | Autoimmune | Thick scaly patches | Confidence % |
+| 🔴 **Warts** | Viral (HPV) | Raised bumps | Confidence % |
+| ⚠️ **SkinCancer** | Malignant | Suspicious lesions | Confidence % |
+| 🟢 **Unknown/Normal** | Healthy/Unidentified | Normal skin | Confidence % |
 
----
-
-## 7. Example Response
-
+**Example Prediction Response**:
 ```json
 {
   "prediction": "Eczema",
   "confidence_percentages": {
-    "Acne": 5.2,
-    "Eczema": 82.34,      ← Highest = Predicted
-    "Psoriasis": 8.1,
-    "Warts": 2.3,
-    "SkinCancer": 1.5,
-    "Unknown_Normal": 0.63
+    "Acne": 5.2,           ← Low
+    "Eczema": 82.34,       ← Highest (Predicted)
+    "Psoriasis": 8.1,      ← Moderate
+    "Warts": 2.3,          ← Very Low
+    "SkinCancer": 1.5,     ← Very Low
+    "Unknown_Normal": 0.63 ← Negligible
   }
 }
 ```
 
-**Frontend also shows**: Color bar indicating confidence level + detailed breakdown
+---
+
+## 7. How It Works (Visual Flowchart)
 
 ---
 
-## 8. Technical Stack
-
-```
-Frontend          │  Backend           │  ML Model
-─────────────────┼────────────────────┼─────────────
-✅ Next.js 15     │  ✅ FastAPI 0.110  │ ✅ ResNet18
-✅ React 19       │  ✅ Uvicorn        │ ✅ PyTorch 2.0
-✅ Tailwind CSS   │  ✅ Pillow         │ ✅ 6 classes
-✅ Shadcn UI      │  ✅ torch          │ ✅ ~87% acc
-✅ TypeScript     │  ✅ numpy          │
-Deployed:         │ Deployed:          │ Deployed:
-Vercel ☁️        │ Render ☁️          │ Dropbox 📦
-```
-
----
-
-## 9. File Validation Rules
+## 7. How It Works (Visual Flowchart)
 
 ```mermaid
-graph LR
-    Upload["Image Selected"] --> Check1{"Valid Format?<br/>JPG/PNG"}
-    Check1 -->|❌ No| Error1["Alert User"]
-    Check1 -->|✅ Yes| Check2{"≤ 4MB?"}
-    Check2 -->|❌ No| Error2["Alert: Size"]
-    Check2 -->|✅ Yes| Send["Send to API"]
-    Send --> Check3{"FastAPI<br/>Accepts?"}
-    Check3 -->|❌ No| Error3["Timeout/Error"]
-    Check3 -->|✅ Yes| Predict["Predict"]
-    Predict --> Result["Show Results"]
+sequenceDiagram
+    participant User as 👤 User
+    participant FE as 🎨 Frontend
+    participant Route as 🔗 API Route
+    participant FastAPI as ⚙️ FastAPI
+    participant Model as 🧠 ResNet18
     
-    style Check1 fill:#e8f5e9
-    style Check2 fill:#e8f5e9
-    style Check3 fill:#e8f5e9
-    style Error1 fill:#ffebee
-    style Error2 fill:#ffebee
-    style Error3 fill:#ffebee
-    style Result fill:#e3f2fd
+    User->>FE: Drag/Select Image
+    FE->>FE: Validate JPEG/PNG/JPG
+    FE->>Route: POST /api/analyze
+    Route->>Route: Check MIME + Size + Timeout
+    Route->>FastAPI: Forward to /predict/
+    FastAPI->>FastAPI: Load Model (if not cached)
+    FastAPI->>FastAPI: Convert RGB + Resize 224×224
+    FastAPI->>FastAPI: Normalize (ImageNet stats)
+    FastAPI->>Model: Forward Pass
+    Model->>FastAPI: Logits (raw output)
+    FastAPI->>FastAPI: Softmax → Probabilities
+    FastAPI->>FastAPI: Format Percentages
+    FastAPI->>Route: JSON Response
+    Route->>FE: Transform 0-1 → 0-100%
+    FE->>FE: Render ResultsDisplay
+    FE->>User: Show Prediction + Bars
 ```
 
 ---
 
-## 10. Deployment Details
+## 8. Project Structure
 
 | Layer | Service | Region | Status |
 |---|---|---|---|
@@ -361,128 +689,120 @@ In `web_v0/app/api/analyze/route.ts`, change API URL from Render to `http://loca
 
 ## 17. Deployment
 
-| Environment | Frontend | Backend |
-|---|---|---|
-| 🟢 **Production** | [Vercel](https://vercel.com) | [Render](https://render.com) |
-| 🔵 **Development** | `npm run dev` | `uvicorn --reload` |
+```
+MediScan/
+├── 📁 web_v0/                    # Next.js Frontend
+│   ├── app/
+│   │   ├── page.tsx              # Main page (HeroSection, ScanSection, etc.)
+│   │   ├── layout.tsx            # Root layout
+│   │   ├── globals.css           # Global styles
+│   │   └── api/analyze/
+│   │       └── route.ts          # API Route Handler ⭐ KEY
+│   ├── components/
+│   │   ├── sections/             # Page sections (5 main sections)
+│   │   ├── image-uploader.tsx    # Drag-drop component ⭐ KEY
+│   │   ├── results-display.tsx   # Results component ⭐ KEY
+│   │   └── ui/                   # 40+ Shadcn UI components
+│   ├── package.json              # Frontend dependencies
+│   └── tsconfig.json             # TypeScript config
+│
+├── 📁 model_api/                 # FastAPI ML Backend
+│   ├── app/
+│   │   ├── main.py               # FastAPI app ⭐ KEY
+│   │   └── __init__.py
+│   ├── requirements.txt          # Python dependencies
+│   ├── render.yaml               # Render config
+│   └── model.pth                 # Model weights (auto-downloaded)
+│
+├── 📁 ml_training/               # Model Training
+│   ├── train.ipynb               # Jupyter notebook
+│   └── dataset_link.md           # Dataset reference
+│
+└── 📄 DOCUMENTATION.md           # This file
+```
 
-**To Deploy**:
-1. **Frontend**: Push to GitHub → Vercel auto-deploys
-2. **Backend**: Connect GitHub repo to Render → Deploy from `render.yaml`
+**Key Files Summary**:
+
+| File | Purpose | Line Count | Role |
+|---|---|---|---|
+| `web_v0/app/api/analyze/route.ts` | CORS proxy + validation | ~80 lines | Gateway |
+| `model_api/app/main.py` | FastAPI server + inference | ~73 lines | Backend |
+| `web_v0/components/image-uploader.tsx` | File upload UI | ~108 lines | UX |
+| `web_v0/components/results-display.tsx` | Results visualization | ~80+ lines | UX |
+| `web_v0/app/page.tsx` | Main page orchestrator | ~67 lines | Coordinator |
 
 ---
 
-## 18. API Documentation
+## 9. Technologies & Dependencies
 
-### Frontend Endpoint
-
-```
-POST /api/analyze
-
-Request:
-  multipart/form-data
-  file: <image file>
-
-Response (200 OK):
-  {
-    "prediction": "Eczema",
-    "confidence_percentages": { ... }
-  }
-
-Errors:
-  400: "No file uploaded"
-  400: "Only JPEG, PNG, or WEBP images supported"
-  400: "Image must be smaller than 4MB"
-  504: "Prediction timed out (25s limit)"
-  500: "Server error: fetch failed"
+**Frontend Stack**:
+```json
+{
+  "framework": "Next.js 15 (App Router)",
+  "ui_library": "React 19",
+  "styling": "Tailwind CSS + PostCSS",
+  "components": "Shadcn UI (40+ Radix UI components)",
+  "icons": "Lucide React",
+  "deployment": "Vercel (auto-deploy on push)"
+}
 ```
 
-### FastAPI Endpoint
-
+**Backend Stack**:
 ```
-POST https://skin-disease-api-j0l8.onrender.com/predict/
-
-Request:
-  multipart/form-data
-  file: <image file>
-
-Response:
-  Same as frontend endpoint
-
-Docs:
-  GET https://skin-disease-api-j0l8.onrender.com/docs
+fastapi==0.110.0       # Web framework
+uvicorn[standard]==0.29.0  # ASGI server
+torch==2.0.1           # PyTorch
+torchvision==0.15.2    # Model zoo
+Pillow==10.2.0         # Image processing
+numpy<2.0              # Numerical computing
+python-multipart==0.0.9 # Form data parsing
+requests               # HTTP requests
+gdown==4.7.1           # Google Drive download
 ```
 
----
-
-## 19. Model Details
-
+**ML Model**:
 ```
 Architecture: ResNet18 (Residual Network, 18 layers)
-  Input: 3 × 224 × 224 RGB image
-  Process: Feature extraction → Classification head
-  Output: 6 class probabilities
-  
-Training:
-  Dataset: Kaggle Skin Disease Dataset
-  Framework: PyTorch
-  Epochs: Trained on Kaggle Notebooks
-  Accuracy: ~87% on test set
-  
-Inference:
-  Framework: PyTorch
-  Device: CPU (optimized)
-  Speed: <1s per image
-  Softmax: Converts logits → probabilities (0-1) → percentages (0-100)
+Input: 3 × 224 × 224 RGB image
+Output: 6 logits → Softmax → 6 probabilities
+Weights: ~45MB (stored on Dropbox, auto-downloaded)
+Training: PyTorch on Kaggle
+Accuracy: ~87% on test dataset
 ```
 
 ---
 
-## 20. Important Notes
+## 10. API Contract
 
-⚠️ **Medical Disclaimer**
-> MediScan is **NOT a medical device** and should not be used for diagnosis. Results are preliminary assessments only. **Always consult a qualified dermatologist** for accurate diagnosis and treatment.
+### REST Endpoints
 
-💡 **Accuracy**
-> Model achieves ~87% accuracy on test dataset. Accuracy varies by image quality, lighting, and skin type.
+```
+Frontend Endpoint:
+  POST /api/analyze
+  
+ML Backend Endpoint:
+  POST https://skin-disease-api-j0l8.onrender.com/predict/
+```
 
-⏱️ **Performance**
-> First request to Render may take 30-60 seconds (cold start). Subsequent requests are faster.
+### Error Handling
 
-🚀 **Limitations**
-> - Works best with clear, well-lit skin images
-> - Not suitable for very small lesions
-> - Color balance affects predictions
-> - Dataset may have regional biases
+```json
+// 400 - No file
+{ "error": "No file uploaded" }
 
----
+// 400 - Invalid format
+{ "error": "Only JPEG, PNG, or WEBP images are supported" }
 
-## 21. Contributing
+// 400 - Too large
+{ "error": "Image must be smaller than 4MB" }
 
-Found a bug or have suggestions? 
-→ Open an issue on [GitHub](https://github.com/itssmdsh/MediScan/tree/main)
+// 504 - Timeout
+{ "error": "Prediction timed out (25s limit)" }
 
----
-
-## 22. Contact
-
-📧 **Email**: mohammad.worklife@gmail.com  
-💻 **GitHub**: [itssmdsh/MediScan](https://github.com/itssmdsh/MediScan/tree/main)  
-🌐 **Frontend**: [ai-mediscan.vercel.app](https://ai-mediscan.vercel.app)  
-⚙️ **API**: [skin-disease-api-j0l8.onrender.com/predict/](https://skin-disease-api-j0l8.onrender.com/predict/)
+// 500 - Server error
+{ "error": "Server error: fetch failed", "details": "..." }
+```
 
 ---
 
-## 23. License
-
-MIT License - See [LICENSE](LICENSE) file
-
----
-
-<div align="center">
-
-### Made with ❤️ by [Mohammad](https://github.com/itssmdsh)
-
-**[Try MediScan Now](https://ai-mediscan.vercel.app)** | **[View Code](https://github.com/itssmdsh/MediScan)** | **[Report Issue](https://github.com/itssmdsh/MediScan/issues)**
-
-</div>
+## 11. Performance & Limits
