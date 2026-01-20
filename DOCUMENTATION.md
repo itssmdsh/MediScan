@@ -869,6 +869,21 @@ graph TD
 | 👥 **Premium Support** | Email/Chat support | Enterprise customers |
 | 🏢 **On-Premise** | Self-hosted option | Privacy compliance |
 
+### Phase 5: Model Optimization & Interpretability
+
+| Feature | Description | Impact | Priority |
+|---|---|---|---|
+| 📦 **ONNX Export** | Convert ResNet18 to ONNX format | 40-50% faster inference, lightweight | 🔴 High |
+| 👁️ **Grad-CAM Heatmaps** | Visual explainability for predictions | Build user trust & transparency | 🔴 High |
+| 📊 **Dataset Expansion** | Increase classes & apply balancing | Improved real-world accuracy | 🟠 Medium |
+| 📄 **Prediction Reports** | History tracking & PDF export | Better documentation & compliance | 🟠 Medium |
+
+**Key Improvements**:
+- 🔧 **ONNX Runtime**: Cross-platform inference optimization
+- 🎨 **Explainability**: Visualize which regions influenced predictions
+- ⚖️ **Dataset Balancing**: Handle imbalanced classes better
+- 📋 **Report Generation**: Downloadable PDFs with full analysis
+
 ---
 
 ## 18. API Contract
