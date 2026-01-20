@@ -463,6 +463,22 @@ graph TD
     style Normalize fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
     style Model fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
     style User fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    
+    linkStyle 0 stroke:#0d47a1,stroke-width:3px
+    linkStyle 1 stroke:#ff6f00,stroke-width:3px
+    linkStyle 2,3 stroke:#1b5e20,stroke-width:3px
+    linkStyle 4 stroke:#7b1fa2,stroke-width:3px
+    linkStyle 5 stroke:#c62828,stroke-width:3px
+    linkStyle 6,7 stroke:#0d47a1,stroke-width:3px
+    linkStyle 8 stroke:#ff6f00,stroke-width:3px
+    linkStyle 9,10 stroke:#1b5e20,stroke-width:3px
+    linkStyle 11 stroke:#c62828,stroke-width:3px
+    linkStyle 12,13 stroke:#0d47a1,stroke-width:3px
+    linkStyle 14 stroke:#ff6f00,stroke-width:3px
+    linkStyle 15,16 stroke:#1b5e20,stroke-width:3px
+    linkStyle 17 stroke:#c62828,stroke-width:3px
+    linkStyle 18,19,20,21,22,23 stroke:#0d47a1,stroke-width:3px
+    linkStyle 24 stroke:#1b5e20,stroke-width:3px
 ```
 
 **Validation Rules**:
