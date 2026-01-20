@@ -19,125 +19,53 @@
 
 ### High-Level Design (HLD)
 
-**System Architecture Overview**:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     🖥️  CLIENT LAYER (Vercel)                    │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  Web Browser → Next.js 15 (React 19 + Tailwind)         │   │
-│  │  • User uploads skin image (JPEG/PNG/WebP)              │   │
-│  │  • Frontend validates MIME type                         │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-                         FormData (File)
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                  🔗 API GATEWAY LAYER (Vercel)                   │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  POST /api/analyze - Validation + CORS Proxy            │   │
-│  │  • Check file exists                                    │   │
-│  │  • Validate MIME: JPEG/PNG/WebP                         │   │
-│  │  • Enforce size limit: ≤ 4MB                            │   │
-│  │  • Set timeout: 25 seconds                              │   │
-│  │  • Wrap in FormData for FastAPI                         │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                      ↓ HTTP POST Multipart
-┌─────────────────────────────────────────────────────────────────┐
-│                ⚙️ ML BACKEND LAYER (Render)                      │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  FastAPI /predict/ - Image Processing + Inference       │   │
-│  │                                                          │   │
-│  │  ┌─ Load Model ─────────────────────────────────────┐  │   │
-│  │  │ Model Cache (In-Memory)                          │  │   │
-│  │  │ ├─ First load: Download from Dropbox (45MB)     │  │   │
-│  │  │ └─ Subsequent: Use cached ResNet18              │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  │                                                          │   │
-│  │  ┌─ Image Processing ──────────────────────────────┐    │   │
-│  │  │ 1. Convert to RGB (PIL.Image)                   │    │   │
-│  │  │ 2. Resize to 224×224                            │    │   │
-│  │  │ 3. Normalize: ImageNet stats                    │    │   │
-│  │  │ 4. Create tensor: [1, 3, 224, 224]             │    │   │
-│  │  └────────────────────────────────────────────────────┘    │   │
-│  │                                                          │   │
-│  │  ┌─ ResNet18 Inference ────────────────────────────┐    │   │
-│  │  │ Forward pass: Extract 6-class logits           │    │   │
-│  │  │ Softmax activation: Get confidence %           │    │   │
-│  │  │ Output: {prediction, confidence_percentages}   │    │   │
-│  │  └────────────────────────────────────────────────────┘    │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                      ↑ JSON Response 200
-┌─────────────────────────────────────────────────────────────────┐
-│                 📦 EXTERNAL STORAGE (Dropbox)                    │
-│  • Model Weights: resnet18_6class.pth (45MB)                    │
-│  • Auto-downloaded on first request                            │
-│  • Cached in memory for subsequent requests                    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
 ```mermaid
 graph TB
-    subgraph Frontend["🖥️ FRONTEND LAYER - Vercel"]
-        direction TB
-        A["<b>Web Browser</b><br/>User Interface"]
-        B["<b>Next.js 15</b><br/>React 19 | Tailwind CSS"]
+    subgraph Client["🖥️ Client Layer"]
+        Browser["Web Browser"]
+        UI["Next.js Frontend<br/>React 19 + Tailwind"]
     end
     
-    subgraph Gateway["🔗 API GATEWAY - Vercel"]
-        direction TB
-        C["<b>POST /api/analyze</b><br/>Validation + CORS<br/>Timeout: 25s | Size: 4MB"]
+    subgraph Gateway["🔗 Gateway Layer"]
+        Route["API Route<br/>/api/analyze<br/>Validation + Proxy"]
     end
     
-    subgraph Backend["⚙️ ML BACKEND - Render"]
-        direction TB
-        D["<b>FastAPI Server</b><br/>Async Processing"]
-        E["<b>ResNet18</b><br/>6-Class Classifier<br/>~87% Accuracy"]
-        F["<b>Model Cache</b><br/>In-Memory"]
+    subgraph Backend["⚙️ ML Backend"]
+        FastAPI["FastAPI Server<br/>Async Handler"]
+        Model["ResNet18 Model<br/>6 Classes"]
+        Cache["Model Cache<br/>In-Memory"]
     end
     
-    subgraph Storage["📦 STORAGE - Dropbox"]
-        G["<b>Model Weights</b><br/>45MB ResNet18"]
+    subgraph External["📦 External"]
+        Dropbox["Dropbox<br/>Model Weights"]
     end
     
-    A -->|"Image Upload"| B
-    B -->|"FormData"| C
-    C -->|"HTTP POST"| D
-    D -->|"Load"| F
-    F -->|"Inference"| E
-    E -->|"Softmax Output"| D
-    D -->|"JSON Response"| C
-    C -->|"Transform"| B
-    B -->|"Display Results"| A
-    F -.->|"First Load"| G
+    Browser -->|Image Upload| UI
+    UI -->|FormData| Route
+    Route -->|Validate<br/>4MB, 25s timeout| FastAPI
+    FastAPI -->|Load Model| Cache
+    Cache -->|Inference| Model
+    Model -->|Softmax| FastAPI
+    FastAPI -->|JSON| Route
+    Route -->|Transform| UI
+    UI -->|Display| Browser
+    Cache -.->|First Load| Dropbox
     
-    style Frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
-    style Gateway fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000
-    style Backend fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000
-    style Storage fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000
+    style Client fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Gateway fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Backend fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style External fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Browser fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style UI fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Route fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
+    style FastAPI fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Model fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Cache fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Dropbox fill:#ffcc80,stroke:#bf360c,stroke-width:3px,color:#000
     
-    style A fill:#64b5f6,stroke:#0066cc,stroke-width:2px,color:#fff
-    style B fill:#42a5f5,stroke:#0066cc,stroke-width:2px,color:#fff
-    style C fill:#ab47bc,stroke:#7b1fa2,stroke-width:2px,color:#fff
-    style D fill:#66bb6a,stroke:#388e3c,stroke-width:2px,color:#fff
-    style E fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#fff
-    style F fill:#43a047,stroke:#388e3c,stroke-width:2px,color:#fff
-    style G fill:#ffa726,stroke:#f57c00,stroke-width:2px,color:#fff
+    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#0d47a1,stroke-width:3px
+    linkStyle 9 stroke:#bf360c,stroke-width:3px
 ```
-
-**Data Flow**:
-1. User uploads image → Browser validates MIME
-2. FormData sent to API Gateway
-3. API validates: file exists, MIME type, size ≤ 4MB, timeout 25s
-4. Valid request → FastAPI /predict/ endpoint
-5. FastAPI loads ResNet18 (first time from Dropbox, then cached)
-6. Image processing: RGB conversion → Resize 224×224 → Normalize
-7. Model inference: Forward pass → Softmax → 6 disease confidence scores
-8. Response: `{prediction: "Eczema", confidence_percentages: {...}}`
-9. Frontend transforms 0-1 → 0-100% and displays color-coded bars
 
 **Layer Responsibilities**:
 
@@ -152,117 +80,63 @@ graph TB
 
 #### 2.1 Frontend Architecture
 
-**Component Hierarchy & Data Flow**:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  page.tsx (Main Orchestrator)                                    │
-│  • State: scanResult, isLoading                                 │
-│  • Handler: handleImageUpload(file)                             │
-│                                                                 │
-│  ├─ ScanSection (UI Container)                                  │
-│  │  ├─ ImageUploader                                            │
-│  │  │  • Drag-drop upload zone                                  │
-│  │  │  • File validation: JPG/JPEG/PNG                          │
-│  │  │  • Preview rendering                                      │
-│  │  │  • Clear button                                           │
-│  │  │  └─ onImageUpload callback                                │
-│  │  │                                                           │
-│  │  └─ ResultsDisplay                                           │
-│  │     • Prediction: Disease name (top match)                   │
-│  │     • Confidence bars (6 diseases)                           │
-│  │     • Color coding:                                          │
-│  │       🟢 Green: Healthy (>80%)                               │
-│  │       🔴 Red: Disease (>80%)                                 │
-│  │       🟡 Yellow: Moderate (40-80%)                           │
-│  │       ⚫ Gray: Low (<40%)                                     │
-│  │     • Sorting: By confidence (descending)                    │
-│  │                                                              │
-│  └─ ScanSection handlers                                        │
-│     └─ POST /api/analyze                                        │
-│        • FormData with file                                     │
-│        • Response transform: 0-1 → 0-100%                       │
-│        • State update: scanResult                               │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    Page["page.tsx<br/>State Management"] -->|Props| ScanSection["ScanSection<br/>UI Container"]
+    ScanSection -->|onImageUpload| Uploader["ImageUploader<br/>Drag-Drop"]
+    Uploader -->|File| Validation["Validate<br/>JPEG/PNG/JPG"]
+    Validation -->|Valid| API["POST /api/analyze"]
+    API -->|Response| Transform["Transform<br/>0-1 → 0-100%"]
+    Transform -->|Results| Display["ResultsDisplay<br/>Color-Coded"]
+    Display -->|Render| Browser["User Sees<br/>Prediction + Bars"]
+    
+    style Page fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style ScanSection fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Uploader fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
+    style Validation fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style API fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Transform fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Display fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Browser fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
+    
+    linkStyle 0,1,2,3,4,5,6 stroke:#0d47a1,stroke-width:3px
 ```
 
 **Frontend Data Flow**:
-```
-1. User selects/drags image
-   ↓
-2. ImageUploader validates MIME (client-side)
-   ├─ Valid: Show preview
-   └─ Invalid: Alert "Only JPEG/PNG/JPG"
-   ↓
-3. User clicks "Analyze"
-   ↓
-4. POST /api/analyze with FormData
-   ├─ Show loading spinner
-   └─ Set isLoading = true
-   ↓
-5. API response received
-   ├─ Parse JSON
-   └─ Transform confidence: 0-1 → 0-100%
-   ↓
-6. Update state: scanResult = {
-     prediction: "Eczema",
-     confidence_percentages: {
-       Acne: 5.2,
-       Eczema: 82.34,
-       Psoriasis: 8.1,
-       ...
-     }
-   }
-   ↓
-7. ResultsDisplay re-renders
-   ├─ Sort by confidence
-   ├─ Apply color coding
-   └─ Animate bars
-   ↓
-8. User sees results
-```
 
 ```mermaid
-graph LR
-    subgraph Frontend["🖥️ FRONTEND LAYER"]
-        direction TB
-        A["<b>page.tsx</b><br/>Orchestrator"]
-        B["<b>ScanSection</b><br/>Container"]
-        C["<b>ImageUploader</b><br/>Upload Component"]
-        D["<b>ResultsDisplay</b><br/>Results Component"]
-    end
+graph TD
+    Main["page.tsx Main<br/>State: scanResult<br/>State: isLoading<br/>Func: handleImageUpload"]
+    Scan["ScanSection<br/>UI Container"]
+    Upload["ImageUploader<br/>validateAndUpload"]
+    Check{"MIME Check<br/>JPG/JPEG/PNG?"}
+    Valid["✅ Valid<br/>onImageUpload file"]
+    Invalid["❌ Invalid<br/>alert()"]
+    API["POST /api/analyze<br/>FormData + file"]
+    Response["API Response 200<br/>prediction + confidence"]
+    Transform["Transform<br/>0-1 → 0-100%"]
+    Display["ResultsDisplay<br/>Color-coded confidence"]
     
-    subgraph State["📊 STATE MANAGEMENT"]
-        direction TB
-        E["<b>scanResult</b><br/>{prediction, confidence}"]
-        F["<b>isLoading</b><br/>true | false"]
-    end
+    Main --> Scan
+    Scan --> Upload
+    Upload --> Check
+    Check -->|Valid| Valid
+    Check -->|Invalid| Invalid
+    Valid --> API
+    API --> Response
+    Response --> Transform
+    Transform --> Display
     
-    subgraph Network["🔌 NETWORK REQUEST"]
-        direction TB
-        G["<b>POST /api/analyze</b><br/>FormData + File"]
-    end
-    
-    A --> B
-    B --> C
-    B --> D
-    C -->|"onImageUpload()"| E
-    E -->|"Render"| D
-    F -->|"Loading State"| C
-    C -->|"Upload"| G
-    G -->|"Response"| E
-    
-    style Frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
-    style State fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000
-    style Network fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000
-    
-    style A fill:#42a5f5,stroke:#0066cc,stroke-width:2px,color:#fff
-    style B fill:#42a5f5,stroke:#0066cc,stroke-width:2px,color:#fff
-    style C fill:#64b5f6,stroke:#0066cc,stroke-width:2px,color:#fff
-    style D fill:#64b5f6,stroke:#0066cc,stroke-width:2px,color:#fff
-    style E fill:#ab47bc,stroke:#7b1fa2,stroke-width:2px,color:#fff
-    style F fill:#ab47bc,stroke:#7b1fa2,stroke-width:2px,color:#fff
-    style G fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
+    style Main fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Scan fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Upload fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Check fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Valid fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Invalid fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style API fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Response fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
+    style Transform fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Display fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
 ```
 
 #### 2.2 API Route Handler
@@ -477,187 +351,28 @@ Body:
 
 ## 4. Validation & Security
 
-**Three-Layer Validation & Security Pipeline**:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  LAYER 1: CLIENT VALIDATION (Browser)                           │
-│                                                                 │
-│  User uploads file                                              │
-│  ├─ MIME Check: JPEG | PNG | JPG                               │
-│  │  ├─ ✓ Valid: Show preview                                    │
-│  │  └─ ✗ Invalid: Alert "Only JPEG/PNG/JPG supported"          │
-│  │                                                              │
-│  └─ User confirms upload                                        │
-│     └─ Pass to Layer 2                                          │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  LAYER 2: API GATEWAY VALIDATION                                │
-│  POST /api/analyze                                              │
-│                                                                 │
-│  ┌─ Step 1: File Exists? ──────────────────────────────┐       │
-│  │ ✓ Yes → Continue                                   │       │
-│  │ ✗ No → Return 400 "No file provided"               │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 2: MIME Valid? ──────────────────────────────┐        │
-│  │ Accepted: image/jpeg, image/png, image/webp        │        │
-│  │ ✓ Valid → Continue                                 │        │
-│  │ ✗ Invalid → Return 400 "Bad MIME type"             │        │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 3: Size Check ───────────────────────────────┐        │
-│  │ Max: 4 * 1024 * 1024 bytes (4MB)                   │        │
-│  │ ✓ ≤ 4MB → Continue                                 │        │
-│  │ ✗ > 4MB → Return 400 "Image too large"             │        │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 4: Timeout Protection ────────────────────────┐       │
-│  │ AbortController: 25 seconds                         │       │
-│  │ ✓ Within time → Continue                            │       │
-│  │ ✗ Timeout → Return 504 "Request timeout"            │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 5: Wrap FormData ────────────────────────────┐        │
-│  │ Create new FormData with file                       │        │
-│  │ POST to FastAPI /predict/                           │        │
-│  └─────────────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  LAYER 3: FASTAPI BACKEND PROCESSING                            │
-│  @app.post("/predict/")                                         │
-│                                                                 │
-│  ┌─ Step 1: Receive Upload ────────────────────────────┐       │
-│  │ Extract file from FormData                          │       │
-│  │ Validate file object                                │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 2: Convert to RGB ────────────────────────────┐       │
-│  │ PIL.Image.open(file.file).convert("RGB")            │       │
-│  │ Ensures 3-channel regardless of input format        │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 3: Resize Image ──────────────────────────────┐       │
-│  │ Resize to (224, 224) - ResNet18 input size          │       │
-│  │ Use bilinear interpolation                          │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 4: Normalize Values ──────────────────────────┐       │
-│  │ Apply ImageNet statistics:                          │       │
-│  │ Mean: [0.485, 0.456, 0.406]                         │       │
-│  │ Std: [0.229, 0.224, 0.225]                          │       │
-│  │ Shape: [1, 3, 224, 224]                             │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 5: Model Inference ───────────────────────────┐       │
-│  │ with torch.no_grad():                               │       │
-│  │   outputs = model(image_tensor)                     │       │
-│  │ Returns 6 logits (one per disease class)            │       │
-│  │                                                     │       │
-│  │ Apply Softmax: Convert logits → probabilities       │       │
-│  │ Result: 6 confidence scores (0-1 range)             │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                      ↓                                          │
-│  ┌─ Step 6: Format Response ───────────────────────────┐       │
-│  │ JSON: {                                             │       │
-│  │   "prediction": "Eczema",  ← Highest confidence     │       │
-│  │   "confidence_percentages": {                       │       │
-│  │     "Acne": 5.2,                                    │       │
-│  │     "Eczema": 82.34,                                │       │
-│  │     "Psoriasis": 8.1,                               │       │
-│  │     "Warts": 2.3,                                   │       │
-│  │     "SkinCancer": 1.5,                              │       │
-│  │     "Unknown_Normal": 0.63                          │       │
-│  │   }                                                 │       │
-│  │ }                                                   │       │
-│  └─────────────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-                        ✅ Success
-                        (200 JSON response)
-```
-
 ```mermaid
 graph TD
-    Start(["🖼️ User Uploads Image"])
+    A["📤 File Upload"] -->|Client| B{"✓ MIME?"}
+    B -->|Yes| C["Preview"]
+    B -->|No| E["❌ Reject"]
+    C -->|Submit| D{"✓ Size ≤ 4MB?"}
+    D -->|Yes| F["🔐 FastAPI<br/>Process"]
+    D -->|No| E
+    F -->|Convert| G["RGB"]
+    G -->|Resize| H["224×224"]
+    H -->|Infer| I["✅ Result"]
     
-    subgraph Layer1["🔒 LAYER 1: CLIENT VALIDATION"]
-        direction TB
-        A["<b>MIME Check</b><br/>JPEG | PNG | JPG"]
-        A -->|Valid| A1["✓ Show Preview"]
-        A -->|Invalid| A2["✗ Alert Error"]
-    end
-    
-    subgraph Layer2["🔐 LAYER 2: API GATEWAY"]
-        direction TB
-        B["<b>File Exists?</b>"]
-        B -->|No| B1["400<br/>No file"]
-        B -->|Yes| C["<b>MIME Valid?</b>"]
-        C -->|Invalid| C1["400<br/>Bad type"]
-        C -->|Valid| D["<b>Size ≤ 4MB?</b>"]
-        D -->|No| D1["400<br/>Too large"]
-        D -->|Yes| E["<b>Timeout<br/>Check</b>"]
-        E -->|Timeout| E1["504<br/>Timeout"]
-        E -->|OK| F["<b>Wrap<br/>FormData</b>"]
-    end
-    
-    subgraph Layer3["⚙️ LAYER 3: FASTAPI PROCESSING"]
-        direction TB
-        G["<b>Receive</b><br/>File"]
-        G --> H["<b>Convert RGB</b><br/>PIL.Image"]
-        H --> I["<b>Resize</b><br/>224×224"]
-        I --> J["<b>Normalize</b><br/>ImageNet"]
-        J --> K["<b>ResNet18</b><br/>Inference"]
-        K --> L["<b>Softmax</b><br/>Probabilities"]
-        L --> M["<b>Format JSON</b><br/>Response"]
-    end
-    
-    Success(["✅ 200 Response<br/>Predictions"])
-    
-    Start --> A1
-    A1 --> B
-    F --> G
-    M --> Success
-    A2 --> Error(["❌ Error Response"])
-    B1 --> Error
-    C1 --> Error
-    D1 --> Error
-    E1 --> Error
-    
-    style Layer1 fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
-    style Layer2 fill:#fff3e0,stroke:#f57c00,stroke-width:3px
-    style Layer3 fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
-    
-    style A fill:#64b5f6,stroke:#0066cc,stroke-width:2px,color:#fff
-    style B fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
-    style C fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
-    style D fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
-    style E fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
-    style F fill:#ffb74d,stroke:#f57c00,stroke-width:2px,color:#000
-    style G fill:#66bb6a,stroke:#388e3c,stroke-width:2px,color:#fff
-    style H fill:#66bb6a,stroke:#388e3c,stroke-width:2px,color:#fff
-    style I fill:#66bb6a,stroke:#388e3c,stroke-width:2px,color:#fff
-    style J fill:#66bb6a,stroke:#388e3c,stroke-width:2px,color:#fff
-    style K fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#fff
-    style L fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#fff
-    style M fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#fff
-    
-    style Success fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px
-    style Error fill:#ffcdd2,stroke:#c62828,stroke-width:3px
+    style A fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000
+    style B fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
+    style D fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
+    style C fill:#b2dfdb,stroke:#004d40,stroke-width:2px,color:#000
+    style E fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#000
+    style F fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000
+    style G fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
+    style H fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
+    style I fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
 ```
-
-**Error Scenarios**:
-
-| Scenario | Layer | Response | HTTP Code |
-|----------|-------|----------|-----------|
-| File missing | Client → API | Show alert | 400 |
-| Invalid MIME | Client → API | Show alert | 400 |
-| File > 4MB | Client → API | Show alert | 400 |
-| Request timeout | API | Server error | 504 |
-| Model error | FastAPI | Server error | 500 |
-| Network error | Client | Retry option | 503 |
 
 **Validation Rules**:
 
