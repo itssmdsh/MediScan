@@ -670,18 +670,16 @@ graph TB
 
 ## 13. Performance Metrics
 
-```
-Metric              │ Value      │ Notes
-────────────────────┼────────────┼─────────────────────
-Model Accuracy      │ ~87%       │ Test dataset
-Inference Time      │ 1-3s       │ After warm-up
-Cold Start          │ 30-60s     │ First request (Render)
-Model Size          │ ~45MB      │ ResNet18 weights
-File Size Limit     │ 4MB        │ Vercel limit
-Timeout             │ 25s        │ Hard limit
-Input Resolution    │ 224×224    │ Fixed size
-Output Classes      │ 6          │ Disease types
-```
+| Metric | Value | Notes |
+|---|---|---|
+| 🧠 **Model Accuracy** | ~87% | Test dataset |
+| ⚡ **Inference Time** | 1-3s | After warm-up |
+| 🔄 **Cold Start** | 30-60s | First request (Render) |
+| 💾 **Model Size** | ~45MB | ResNet18 weights |
+| 📦 **File Size Limit** | 4MB | Vercel limit |
+| ⏱️ **Timeout** | 25s | Hard limit |
+| 📐 **Input Resolution** | 224×224 | Fixed size |
+| 🏷️ **Output Classes** | 6 | Disease types |
 
 ---
 
