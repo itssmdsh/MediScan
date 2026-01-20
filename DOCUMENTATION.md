@@ -51,10 +51,20 @@ graph TB
     UI -->|Display| Browser
     Cache -.->|First Load| Dropbox
     
-    style Client fill:#e3f2fd
-    style Gateway fill:#f3e5f5
-    style Backend fill:#f1f8e9
-    style External fill:#fff3e0
+    style Client fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Gateway fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Backend fill:#f1f8e9,stroke:#388e3c,stroke-width:2px
+    style External fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Browser fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style UI fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style Route fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style FastAPI fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Model fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Cache fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Dropbox fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+    
+    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#1976d2,stroke-width:2px
+    linkStyle 9 stroke:#ff9800,stroke-width:2px
 ```
 
 **Layer Responsibilities**:
@@ -79,6 +89,17 @@ graph LR
     API -->|Response| Transform["Transform<br/>0-1 → 0-100%"]
     Transform -->|Results| Display["ResultsDisplay<br/>Color-Coded"]
     Display -->|Render| Browser["User Sees<br/>Prediction + Bars"]
+    
+    style Page fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style ScanSection fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Uploader fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style Validation fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style API fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Transform fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style Display fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Browser fill:#eceff1,stroke:#37474f,stroke-width:2px
+    
+    linkStyle 0,1,2,3,4,5,6 stroke:#1976d2,stroke-width:2px
 ```
 
 **Frontend Data Flow**:
@@ -249,15 +270,17 @@ graph LR
     Probs -->|×100| Percent["Percentages<br/>0-100 range"]
     Percent -->|Return| JSON["JSON Response<br/>6 Classes"]
     
-    style Raw fill:#fff3e0
-    style RGB fill:#fff3e0
-    style Size fill:#fff3e0
-    style Tensor fill:#f1f8e9
-    style Batch fill:#f1f8e9
-    style Model fill:#e8f5e9
-    style Probs fill:#e3f2fd
-    style Percent fill:#e3f2fd
-    style JSON fill:#f3e5f5
+    style Raw fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style RGB fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Size fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Tensor fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Batch fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Model fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Probs fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Percent fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style JSON fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    linkStyle 0,1,2,3,4,5,6,7 stroke:#1976d2,stroke-width:2px
 ```
 
 #### 2.5 Component Interaction Diagram
@@ -289,6 +312,27 @@ graph TD
     Transform -->|setState| Display["ResultsDisplay<br/>Color-Coded Bars"]
     Display -->|render| Browser["🖥️ User Sees<br/>Results"]
     ShowError -->|render| Browser
+    
+    style ImageUploader fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style LocalCheck fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style FileValidation fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style TimeoutCheck fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style DisplayPreview fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style ShowAlert fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style APICall fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style ForwardAPI fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Inference fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style ReturnJSON fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Return400 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style Return504 fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style Transform fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Display fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Browser fill:#eceff1,stroke:#37474f,stroke-width:2px
+    style ShowError fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 stroke:#1976d2,stroke-width:2px
+    linkStyle 2,5,10,16 stroke:#c62828,stroke-width:2px
+    linkStyle 8 stroke:#4caf50,stroke-width:2px
 ```
 
 ---
@@ -472,6 +516,7 @@ graph TD
 ## 6. Disease Classes & Prediction
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e3f2fd', 'primaryBorderColor': '#1976d2', 'lineColor': '#2196f3', 'secondBkgColor': '#f1f8e9', 'tertiaryColor': '#fff3e0'}}}%%
 pie title 6 Disease Classes Detected
     "Acne" : 16.67
     "Eczema" : 16.67
@@ -511,6 +556,7 @@ pie title 6 Disease Classes Detected
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant User as 👤 User
     participant FE as 🎨 Frontend
     participant Route as 🔗 API Route
@@ -799,12 +845,14 @@ graph LR
     Export --> Analytics["📈 Personal Analytics"]
     Analytics --> Doctor["👨‍⚕️ Share with Doctor"]
     
-    style Auth fill:#2196f3,color:#fff
-    style History fill:#4caf50,color:#fff
-    style Share fill:#ff9800,color:#fff
-    style Export fill:#9c27b0,color:#fff
-    style Analytics fill:#f44336,color:#fff
-    style Doctor fill:#00bcd4,color:#fff
+    style Auth fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
+    style History fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style Share fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style Export fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Analytics fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style Doctor fill:#00bcd4,stroke:#00695c,stroke-width:2px,color:#fff
+    
+    linkStyle 0,1,2,3,4 stroke:#1565c0,stroke-width:2px
 ```
 
 **Features**:
@@ -824,16 +872,18 @@ graph TD
     G["🌍 Multi-language<br/>10+ languages"] --> H["Global accessibility<br/>Localized UI"]
     I["📱 Mobile App<br/>iOS/Android"] --> J["Native performance<br/>Offline capability"]
     
-    style A fill:#2196f3,color:#fff
-    style B fill:#2196f3,color:#fff
-    style C fill:#ff9800,color:#fff
-    style D fill:#ff9800,color:#fff
-    style E fill:#4caf50,color:#fff
-    style F fill:#4caf50,color:#fff
-    style G fill:#9c27b0,color:#fff
-    style H fill:#9c27b0,color:#fff
-    style I fill:#f44336,color:#fff
-    style J fill:#f44336,color:#fff
+    style A fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
+    style B fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
+    style C fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style D fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style E fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style F fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style G fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style H fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style I fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style J fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    
+    linkStyle 0,1,2,3,4,5,6,7,8,9 stroke:#1565c0,stroke-width:2px
 ```
 
 ### Phase 4: Enterprise Features
