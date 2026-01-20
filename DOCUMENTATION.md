@@ -353,52 +353,25 @@ Body:
 
 ```mermaid
 graph TD
-    Upload["File Upload"] -->|Step 1| LocalValidate["Client-Side Validation<br/>ImageUploader Component"]
-    LocalValidate -->|MIME Check| AllowedMIME1{"✓ JPEG/PNG/JPG?"}
-    AllowedMIME1 -->|Yes| Preview["Show Preview"]
-    AllowedMIME1 -->|No| Reject1["❌ Alert & Reject"]
+    A["📤 File Upload"] -->|Client| B{"✓ MIME?"}
+    B -->|Yes| C["Preview"]
+    B -->|No| E["❌ Reject"]
+    C -->|Submit| D{"✓ Size ≤ 4MB?"}
+    D -->|Yes| F["🔐 FastAPI<br/>Process"]
+    D -->|No| E
+    F -->|Convert| G["RGB"]
+    G -->|Resize| H["224×224"]
+    H -->|Infer| I["✅ Result"]
     
-    Preview -->|Submit| Step2["Step 2: API Route<br/>Server-Side Validation"]
-    Reject1 -.->|End| User["User Exit"]
-    
-    Step2 -->|Exists| FileCheck{"✓ File Exists?"}
-    FileCheck -->|No| Reject2["❌ 400: No file"]
-    
-    FileCheck -->|Yes| MIMECheck{"✓ JPEG/PNG/WebP?"}
-    MIMECheck -->|No| Reject3["❌ 400: Invalid MIME"]
-    
-    MIMECheck -->|Yes| SizeCheck{"✓ Size ≤ 4MB?"}
-    SizeCheck -->|No| Reject4["❌ 400: Too large"]
-    
-    SizeCheck -->|Yes| Step3["Step 3: FastAPI<br/>Auto-Processing"]
-    Reject2 -.->|End| User
-    Reject3 -.->|End| User
-    Reject4 -.->|End| User
-    
-    Step3 -->|Convert| RGB["Convert to RGB<br/>3-channel"]
-    RGB -->|Resize| Normalize["224×224<br/>+ Normalize"]
-    Normalize -->|Ready| Model["ResNet18<br/>Inference"]
-    Model -->|Result| Success["✅ Confidence %"]
-    Success -->|Return| User
-    
-    style AllowedMIME1 fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style FileCheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style MIMECheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style SizeCheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Reject1 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Reject2 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Reject3 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Reject4 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Success fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Upload fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style LocalValidate fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Step2 fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Step3 fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style Preview fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style RGB fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Normalize fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Model fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style User fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style A fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000
+    style B fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
+    style D fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
+    style C fill:#b2dfdb,stroke:#004d40,stroke-width:2px,color:#000
+    style E fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#000
+    style F fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000
+    style G fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
+    style H fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000
+    style I fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px,color:#000
 ```
 
 **Validation Rules**:
