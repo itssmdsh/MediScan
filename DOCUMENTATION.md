@@ -104,50 +104,39 @@ graph LR
 
 **Frontend Data Flow**:
 
-```
-┌─────────────────────────────────────┐
-│ page.tsx (Main)                     │
-│ - scanResult state                  │
-│ - isLoading state                   │
-│ - handleImageUpload()               │
-└──────────────┬──────────────────────┘
-               │
-        ┌──────▼──────┐
-        │  ScanSection │
-        └──────┬───────┘
-               │
-        ┌──────▼────────────┐
-        │ ImageUploader      │
-        │ validateAndUpload()│
-        └──────┬─────────────┘
-               │
-    ┌──────────▼──────────────┐
-    │ Check MIME Type         │
-    │ JPG/JPEG/PNG Allowed    │
-    └──────────┬──────────────┘
-               │
-               ├─ Valid → onImageUpload(file)
-               └─ Invalid → alert()
-                     │
-             ┌───────▼────────────────┐
-             │ POST /api/analyze      │
-             │ FormData with file     │
-             └───────┬────────────────┘
-                     │
-          ┌──────────▼──────────────┐
-          │ API Response (200)       │
-          │ {prediction, confidence}│
-          └──────────┬───────────────┘
-                     │
-          ┌──────────▼──────────────────┐
-          │ Transform Percentages       │
-          │ 0-1 range → 0-100 range    │
-          └──────────┬──────────────────┘
-                     │
-          ┌──────────▼──────────────┐
-          │ ResultsDisplay renders  │
-          │ Color-coded confidence  │
-          └────────────────────────┘
+```mermaid
+graph TD
+    Main["page.tsx Main<br/>State: scanResult<br/>State: isLoading<br/>Func: handleImageUpload"]
+    Scan["ScanSection<br/>UI Container"]
+    Upload["ImageUploader<br/>validateAndUpload"]
+    Check{"MIME Check<br/>JPG/JPEG/PNG?"}
+    Valid["✅ Valid<br/>onImageUpload file"]
+    Invalid["❌ Invalid<br/>alert()"]
+    API["POST /api/analyze<br/>FormData + file"]
+    Response["API Response 200<br/>prediction + confidence"]
+    Transform["Transform<br/>0-1 → 0-100%"]
+    Display["ResultsDisplay<br/>Color-coded confidence"]
+    
+    Main --> Scan
+    Scan --> Upload
+    Upload --> Check
+    Check -->|Valid| Valid
+    Check -->|Invalid| Invalid
+    Valid --> API
+    API --> Response
+    Response --> Transform
+    Transform --> Display
+    
+    style Main fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Scan fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Upload fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Check fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Valid fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Invalid fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style API fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Response fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
+    style Transform fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Display fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
 ```
 
 #### 2.2 API Route Handler
