@@ -371,23 +371,24 @@ Body:
 ## 4. Validation & Security
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#fff', 'primaryBorderColor': '#000'}}}%%
 graph TD
     Upload["File Upload"] -->|Step 1| LocalValidate["Client-Side Validation<br/>ImageUploader Component"]
-    LocalValidate -->|MIME Check| AllowedMIME1{"JPEG/PNG/JPG?"}
+    LocalValidate -->|MIME Check| AllowedMIME1{"✓ JPEG/PNG/JPG?"}
     AllowedMIME1 -->|Yes| Preview["Show Preview"]
-    AllowedMIME1 -->|No| Reject1["Alert & Reject"]
+    AllowedMIME1 -->|No| Reject1["❌ Alert & Reject"]
     
     Preview -->|Submit| Step2["Step 2: API Route<br/>Server-Side Validation"]
-    Reject1 -.->|End| User["❌ User"]
+    Reject1 -.->|End| User["User Exit"]
     
-    Step2 -->|Exists| FileCheck{"File Exists?"}
-    FileCheck -->|No| Reject2["400: No file"]
+    Step2 -->|Exists| FileCheck{"✓ File Exists?"}
+    FileCheck -->|No| Reject2["❌ 400: No file"]
     
-    FileCheck -->|Yes| MIMECheck{"MIME Type<br/>JPEG/PNG/WebP?"}
-    MIMECheck -->|No| Reject3["400: Invalid MIME"]
+    FileCheck -->|Yes| MIMECheck{"✓ JPEG/PNG/WebP?"}
+    MIMECheck -->|No| Reject3["❌ 400: Invalid MIME"]
     
-    MIMECheck -->|Yes| SizeCheck{"Size ≤ 4MB?"}
-    SizeCheck -->|No| Reject4["400: Too large"]
+    MIMECheck -->|Yes| SizeCheck{"✓ Size ≤ 4MB?"}
+    SizeCheck -->|No| Reject4["❌ 400: Too large"]
     
     SizeCheck -->|Yes| Step3["Step 3: FastAPI<br/>Auto-Processing"]
     Reject2 -.->|End| User
@@ -400,16 +401,24 @@ graph TD
     Model -->|Result| Success["✅ Confidence %"]
     Success -->|Return| User
     
-    style AllowedMIME1 fill:#c8e6c9
-    style FileCheck fill:#c8e6c9
-    style MIMECheck fill:#c8e6c9
-    style SizeCheck fill:#c8e6c9
-    style Reject1 fill:#ffcdd2
-    style Reject2 fill:#ffcdd2
-    style Reject3 fill:#ffcdd2
-    style Reject4 fill:#ffcdd2
-    style Reject4 fill:#ffcdd2
-    style Success fill:#c8e6c9
+    style AllowedMIME1 fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style FileCheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style MIMECheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style SizeCheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style Reject1 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style Reject2 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style Reject3 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style Reject4 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
+    style Success fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style Upload fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
+    style LocalValidate fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style Step2 fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style Step3 fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style Preview fill:#00bcd4,stroke:#00695c,stroke-width:2px,color:#fff
+    style RGB fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Normalize fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Model fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style User fill:#673ab7,stroke:#311b92,stroke-width:2px,color:#fff
 ```
 
 **Validation Rules**:
@@ -500,10 +509,6 @@ pie title 6 Disease Classes Detected
 
 ## 7. How It Works (Visual Flowchart)
 
----
-
-## 7. How It Works (Visual Flowchart)
-
 ```mermaid
 sequenceDiagram
     participant User as 👤 User
@@ -548,7 +553,7 @@ sequenceDiagram
 
 ---
 
-## 11. How to Use
+## 9. How to Use
 
 ### 👤 As a User
 1. Visit [ai-mediscan.vercel.app](https://ai-mediscan.vercel.app)
@@ -574,7 +579,7 @@ python -m uvicorn app.main:app --reload
 
 ---
 
-## 12. Project Structure (Simplified)
+## 10. Project Structure (Simplified)
 
 ```
 MediScan/
@@ -595,7 +600,7 @@ MediScan/
 
 ---
 
-## 13. Validation at Each Step
+## 11. Validation at Each Step
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -630,7 +635,7 @@ MediScan/
 
 ---
 
-## 14. Error Handling
+## 12. Error Handling
 
 
 | Error | Cause | Solution |
@@ -643,7 +648,7 @@ MediScan/
 
 ---
 
-## 15. Performance Metrics
+## 13. Performance Metrics
 
 ```
 Metric              │ Value      │ Notes
@@ -660,7 +665,7 @@ Output Classes      │ 6          │ Disease types
 
 ---
 
-## 16. Quick Start
+## 14. Quick Start
 
 ### 🌐 Just Want to Try It?
 → Go to **[ai-mediscan.vercel.app](https://ai-mediscan.vercel.app)** and upload a skin image
@@ -687,7 +692,7 @@ In `web_v0/app/api/analyze/route.ts`, change API URL from Render to `http://loca
 
 ---
 
-## 17. Deployment
+## 15. Deployment
 
 ```
 MediScan/
@@ -733,7 +738,7 @@ MediScan/
 
 ---
 
-## 9. Technologies & Dependencies
+## 16. Technologies & Dependencies
 
 **Frontend Stack**:
 ```json
@@ -772,7 +777,79 @@ Accuracy: ~87% on test dataset
 
 ---
 
-## 10. API Contract
+## 17. Future Enhancements
+
+### Phase 1: Core Improvements
+
+| Feature | Description | Impact | Priority |
+|---|---|---|---|
+| **Model Quantization** | Convert ResNet18 to Int8 | 50% faster inference | 🔴 High |
+| **Batch Processing** | Queue multiple images | Better throughput | 🟠 Medium |
+| **Prediction Caching** | Cache results by image hash | Reduce redundant calls | 🟠 Medium |
+| **Advanced Error Messages** | Detailed debugging info | Better UX | 🟡 Low |
+| **Rate Limiting** | Limit requests per IP | Prevent abuse | 🔴 High |
+
+### Phase 2: User Features
+
+```mermaid
+graph LR
+    Auth["🔐 User Accounts"] --> History["📊 Prediction History"]
+    History --> Share["📤 Share Results"]
+    Share --> Export["📥 Export CSV"]
+    Export --> Analytics["📈 Personal Analytics"]
+    Analytics --> Doctor["👨‍⚕️ Share with Doctor"]
+    
+    style Auth fill:#2196f3,color:#fff
+    style History fill:#4caf50,color:#fff
+    style Share fill:#ff9800,color:#fff
+    style Export fill:#9c27b0,color:#fff
+    style Analytics fill:#f44336,color:#fff
+    style Doctor fill:#00bcd4,color:#fff
+```
+
+**Features**:
+- 🔐 User Authentication (Sign up / Login)
+- 📊 Prediction History (Track past predictions)
+- 📤 Export Results (PDF/CSV download)
+- 👨‍⚕️ Doctor Integration (Secure sharing link)
+- 📈 Progress Tracking (Monitor changes over time)
+
+### Phase 3: Advanced ML
+
+```mermaid
+graph TD
+    A["🎯 Model Ensemble<br/>Multiple variants"] --> B["Higher accuracy<br/>with voting"]
+    C["🎨 Explainability<br/>Saliency maps"] --> D["Show decision regions<br/>GradCAM visualization"]
+    E["🔬 Custom Training<br/>Fine-tune model"] --> F["Personalized accuracy<br/>User dataset"]
+    G["🌍 Multi-language<br/>10+ languages"] --> H["Global accessibility<br/>Localized UI"]
+    I["📱 Mobile App<br/>iOS/Android"] --> J["Native performance<br/>Offline capability"]
+    
+    style A fill:#2196f3,color:#fff
+    style B fill:#2196f3,color:#fff
+    style C fill:#ff9800,color:#fff
+    style D fill:#ff9800,color:#fff
+    style E fill:#4caf50,color:#fff
+    style F fill:#4caf50,color:#fff
+    style G fill:#9c27b0,color:#fff
+    style H fill:#9c27b0,color:#fff
+    style I fill:#f44336,color:#fff
+    style J fill:#f44336,color:#fff
+```
+
+### Phase 4: Enterprise Features
+
+| Feature | Description | Use Case |
+|---|---|---|
+| 💳 **API Rate Tiers** | Free / Pro / Enterprise plans | Flexible pricing |
+| 📦 **Bulk Processing** | Upload 1000s of images | Hospital/Clinic workflows |
+| 🔔 **Webhooks** | Real-time callbacks | Integration with EHR systems |
+| 📊 **Analytics Dashboard** | Usage metrics & insights | Admin monitoring |
+| 👥 **Premium Support** | Email/Chat support | Enterprise customers |
+| 🏢 **On-Premise** | Self-hosted option | Privacy compliance |
+
+---
+
+## 18. API Contract
 
 ### REST Endpoints
 
