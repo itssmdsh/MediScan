@@ -802,7 +802,3 @@ ML Backend Endpoint:
 // 500 - Server error
 { "error": "Server error: fetch failed", "details": "..." }
 ```
-
----
-
-## 11. Performance & Limits
