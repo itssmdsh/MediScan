@@ -647,35 +647,21 @@ MediScan/
 
 ## 11. Validation at Each Step
 
-```
-┌─────────────────────────────────────────────────────┐
-│ Step 1: ImageUploader (Client-Side)                 │
-│ ✓ MIME check: JPG/JPEG/PNG                         │
-│ ✓ Quick feedback                                     │
-└────────────────────┬────────────────────────────────┘
-                     ↓
-┌─────────────────────────────────────────────────────┐
-│ Step 2: API Route (Next.js)                         │
-│ ✓ File exists check                                 │
-│ ✓ MIME: JPEG/PNG/WebP                              │
-│ ✓ Size: ≤ 4MB                                       │
-│ ✓ Timeout: 25 seconds max                          │
-└────────────────────┬────────────────────────────────┘
-                     ↓
-┌─────────────────────────────────────────────────────┐
-│ Step 3: FastAPI (Backend)                           │
-│ ✓ Convert to RGB                                    │
-│ ✓ Resize to 224×224                               │
-│ ✓ Normalize with ImageNet stats                   │
-│ ✓ Run ResNet18 inference                          │
-└────────────────────┬────────────────────────────────┘
-                     ↓
-┌─────────────────────────────────────────────────────┐
-│ Step 4: Frontend Display                            │
-│ ✓ Transform 0-1 → 0-100%                          │
-│ ✓ Color code based on disease + confidence       │
-│ ✓ Sort by confidence descending                    │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    Step1["🖥️ Step 1: ImageUploader<br/>Client-Side<br/>✓ MIME check: JPG/JPEG/PNG<br/>✓ Quick feedback"]
+    Step2["🔗 Step 2: API Route<br/>Next.js<br/>✓ File exists check<br/>✓ MIME: JPEG/PNG/WebP<br/>✓ Size: ≤ 4MB<br/>✓ Timeout: 25s max"]
+    Step3["⚙️ Step 3: FastAPI<br/>Backend<br/>✓ Convert to RGB<br/>✓ Resize to 224×224<br/>✓ Normalize with ImageNet<br/>✓ Run ResNet18"]
+    Step4["🎨 Step 4: Frontend Display<br/>✓ Transform 0-1 → 0-100%<br/>✓ Color code by disease<br/>✓ Sort by confidence"]
+    
+    Step1 --> Step2
+    Step2 --> Step3
+    Step3 --> Step4
+    
+    style Step1 fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Step2 fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Step3 fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Step4 fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
 ```
 
 ---
@@ -881,8 +867,6 @@ graph TD
     style H fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style I fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
     style J fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    
-    linkStyle 0,1,2,3,4,5,6,7,8,9 stroke:#1565c0,stroke-width:2px
 ```
 
 ### Phase 4: Enterprise Features
