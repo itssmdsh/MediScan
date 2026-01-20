@@ -51,20 +51,20 @@ graph TB
     UI -->|Display| Browser
     Cache -.->|First Load| Dropbox
     
-    style Client fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style Gateway fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style Backend fill:#f1f8e9,stroke:#388e3c,stroke-width:2px
-    style External fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style Browser fill:#e0f2f1,stroke:#00796b,stroke-width:2px
-    style UI fill:#e0f2f1,stroke:#00796b,stroke-width:2px
-    style Route fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style FastAPI fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Model fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Cache fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Dropbox fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+    style Client fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Gateway fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Backend fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style External fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Browser fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style UI fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Route fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
+    style FastAPI fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Model fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Cache fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Dropbox fill:#ffcc80,stroke:#bf360c,stroke-width:3px,color:#000
     
-    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#1976d2,stroke-width:2px
-    linkStyle 9 stroke:#ff9800,stroke-width:2px
+    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#0d47a1,stroke-width:3px
+    linkStyle 9 stroke:#bf360c,stroke-width:3px
 ```
 
 **Layer Responsibilities**:
@@ -90,16 +90,16 @@ graph LR
     Transform -->|Results| Display["ResultsDisplay<br/>Color-Coded"]
     Display -->|Render| Browser["User Sees<br/>Prediction + Bars"]
     
-    style Page fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style ScanSection fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style Uploader fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style Validation fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style API fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Transform fill:#e0f2f1,stroke:#00796b,stroke-width:2px
-    style Display fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
-    style Browser fill:#eceff1,stroke:#37474f,stroke-width:2px
+    style Page fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style ScanSection fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Uploader fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
+    style Validation fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style API fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Transform fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style Display fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Browser fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
     
-    linkStyle 0,1,2,3,4,5,6 stroke:#1976d2,stroke-width:2px
+    linkStyle 0,1,2,3,4,5,6 stroke:#0d47a1,stroke-width:3px
 ```
 
 **Frontend Data Flow**:
@@ -270,17 +270,17 @@ graph LR
     Probs -->|×100| Percent["Percentages<br/>0-100 range"]
     Percent -->|Return| JSON["JSON Response<br/>6 Classes"]
     
-    style Raw fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style RGB fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style Size fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style Tensor fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
-    style Batch fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
-    style Model fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Probs fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style Percent fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style JSON fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Raw fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style RGB fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Size fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Tensor fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Batch fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Model fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Probs fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Percent fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style JSON fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
     
-    linkStyle 0,1,2,3,4,5,6,7 stroke:#1976d2,stroke-width:2px
+    linkStyle 0,1,2,3,4,5,6,7 stroke:#0d47a1,stroke-width:3px
 ```
 
 #### 2.5 Component Interaction Diagram
@@ -313,26 +313,26 @@ graph TD
     Display -->|render| Browser["🖥️ User Sees<br/>Results"]
     ShowError -->|render| Browser
     
-    style ImageUploader fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style LocalCheck fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style FileValidation fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style TimeoutCheck fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style DisplayPreview fill:#e0f2f1,stroke:#00796b,stroke-width:2px
-    style ShowAlert fill:#ffebee,stroke:#c62828,stroke-width:2px
-    style APICall fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style ForwardAPI fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style Inference fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style ReturnJSON fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style Return400 fill:#ffebee,stroke:#c62828,stroke-width:2px
-    style Return504 fill:#ffebee,stroke:#c62828,stroke-width:2px
-    style Transform fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style Display fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
-    style Browser fill:#eceff1,stroke:#37474f,stroke-width:2px
-    style ShowError fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style ImageUploader fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
+    style LocalCheck fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style FileValidation fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style TimeoutCheck fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style DisplayPreview fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style ShowAlert fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style APICall fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style ForwardAPI fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style Inference fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style ReturnJSON fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Return400 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Return504 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Transform fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Display fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Browser fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
+    style ShowError fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
     
-    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 stroke:#1976d2,stroke-width:2px
-    linkStyle 2,5,10,16 stroke:#c62828,stroke-width:2px
-    linkStyle 8 stroke:#4caf50,stroke-width:2px
+    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 stroke:#0d47a1,stroke-width:3px
+    linkStyle 2,5,10,16 stroke:#b71c1c,stroke-width:3px
+    linkStyle 8 stroke:#1b5e20,stroke-width:3px
 ```
 
 ---
@@ -445,24 +445,24 @@ graph TD
     Model -->|Result| Success["✅ Confidence %"]
     Success -->|Return| User
     
-    style AllowedMIME1 fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style FileCheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style MIMECheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style SizeCheck fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style Reject1 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style Reject2 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style Reject3 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style Reject4 fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style Success fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style Upload fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
-    style LocalValidate fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style Step2 fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style Step3 fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style Preview fill:#00bcd4,stroke:#00695c,stroke-width:2px,color:#fff
-    style RGB fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style Normalize fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style Model fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style User fill:#673ab7,stroke:#311b92,stroke-width:2px,color:#fff
+    style AllowedMIME1 fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style FileCheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style MIMECheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style SizeCheck fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Reject1 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Reject2 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Reject3 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Reject4 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
+    style Success fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Upload fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
+    style LocalValidate fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Step2 fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Step3 fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
+    style Preview fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
+    style RGB fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Normalize fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style Model fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    style User fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
 ```
 
 **Validation Rules**:
