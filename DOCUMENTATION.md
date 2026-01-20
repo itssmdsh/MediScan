@@ -272,58 +272,6 @@ graph LR
     linkStyle 0,1,2,3,4,5,6,7 stroke:#0d47a1,stroke-width:3px
 ```
 
-#### 2.5 Component Interaction Diagram
-
-```mermaid
-graph TD
-    ImageUploader["📤 ImageUploader<br/>Drag-Drop Handler"]
-    
-    ImageUploader -->|validateAndUpload| LocalCheck{"Valid<br/>Format?"}
-    LocalCheck -->|Yes| DisplayPreview["Show Image<br/>Preview"]
-    LocalCheck -->|No| ShowAlert["Alert User<br/>Invalid Format"]
-    
-    DisplayPreview -->|User Confirms| APICall["POST /api/analyze<br/>FormData"]
-    
-    APICall -->|Route Handler| FileValidation{"File Check<br/>Size/Type"}
-    FileValidation -->|Pass| ForwardAPI["Forward to<br/>/predict/"]
-    FileValidation -->|Fail| Return400["Return 400<br/>Error Message"]
-    
-    ForwardAPI -->|Timeout 25s| TimeoutCheck{"Completed<br/>in Time?"}
-    TimeoutCheck -->|Yes| Inference["ResNet18<br/>Inference"]
-    TimeoutCheck -->|No| Return504["Return 504<br/>Timeout Error"]
-    
-    Inference -->|Success| ReturnJSON["Return JSON<br/>Prediction + Confidence"]
-    
-    ReturnJSON -->|Front| Transform["Transform<br/>0-1 → 0-100%"]
-    Return400 -->|Front| ShowError["Show Error<br/>Alert"]
-    Return504 -->|Front| ShowError
-    
-    Transform -->|setState| Display["ResultsDisplay<br/>Color-Coded Bars"]
-    Display -->|render| Browser["🖥️ User Sees<br/>Results"]
-    ShowError -->|render| Browser
-    
-    style ImageUploader fill:#f8bbd0,stroke:#880e4f,stroke-width:3px,color:#000
-    style LocalCheck fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style FileValidation fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style TimeoutCheck fill:#ffe0b2,stroke:#e65100,stroke-width:3px,color:#000
-    style DisplayPreview fill:#b2dfdb,stroke:#004d40,stroke-width:3px,color:#000
-    style ShowAlert fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style APICall fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style ForwardAPI fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,color:#000
-    style Inference fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style ReturnJSON fill:#a5d6a7,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Return400 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Return504 fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    style Transform fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
-    style Display fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
-    style Browser fill:#90caf9,stroke:#01579b,stroke-width:3px,color:#000
-    style ShowError fill:#ffcdd2,stroke:#b71c1c,stroke-width:3px,color:#000
-    
-    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 stroke:#0d47a1,stroke-width:3px
-    linkStyle 2,5,10,16 stroke:#b71c1c,stroke-width:3px
-    linkStyle 8 stroke:#1b5e20,stroke-width:3px
-```
-
 ---
 
 ## 3. Data Structures & API Contracts
@@ -503,17 +451,6 @@ graph TD
 
 ## 6. Disease Classes & Prediction
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e3f2fd', 'primaryBorderColor': '#1976d2', 'lineColor': '#2196f3', 'secondBkgColor': '#f1f8e9', 'tertiaryColor': '#fff3e0'}}}%%
-pie title 6 Disease Classes Detected
-    "Acne" : 16.67
-    "Eczema" : 16.67
-    "Psoriasis" : 16.67
-    "Warts" : 16.67
-    "SkinCancer" : 16.67
-    "Unknown/Normal" : 16.67
-```
-
 | Disease | Category | Model Detects | Output |
 |---|---|---|---|
 | 🔴 **Acne** | Bacterial/Inflammatory | Pimples, blackheads | Confidence % |
@@ -541,37 +478,6 @@ pie title 6 Disease Classes Detected
 ---
 
 ## 7. How It Works (Visual Flowchart)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as 👤 User
-    participant FE as 🎨 Frontend
-    participant Route as 🔗 API Route
-    participant FastAPI as ⚙️ FastAPI
-    participant Model as 🧠 ResNet18
-    
-    User->>FE: Drag/Select Image
-    FE->>FE: Validate JPEG/PNG/JPG
-    FE->>Route: POST /api/analyze
-    Route->>Route: Check MIME + Size + Timeout
-    Route->>FastAPI: Forward to /predict/
-    FastAPI->>FastAPI: Load Model (if not cached)
-    FastAPI->>FastAPI: Convert RGB + Resize 224×224
-    FastAPI->>FastAPI: Normalize (ImageNet stats)
-    FastAPI->>Model: Forward Pass
-    Model->>FastAPI: Logits (raw output)
-    FastAPI->>FastAPI: Softmax → Probabilities
-    FastAPI->>FastAPI: Format Percentages
-    FastAPI->>Route: JSON Response
-    Route->>FE: Transform 0-1 → 0-100%
-    FE->>FE: Render ResultsDisplay
-    FE->>User: Show Prediction + Bars
-```
-
----
-
-## 8. Project Structure
 
 | Layer | Service | Region | Status |
 |---|---|---|---|
@@ -809,24 +715,6 @@ Accuracy: ~87% on test dataset
 
 ### Phase 2: User Features
 
-```mermaid
-graph LR
-    Auth["🔐 User Accounts"] --> History["📊 Prediction History"]
-    History --> Share["📤 Share Results"]
-    Share --> Export["📥 Export CSV"]
-    Export --> Analytics["📈 Personal Analytics"]
-    Analytics --> Doctor["👨‍⚕️ Share with Doctor"]
-    
-    style Auth fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
-    style History fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style Share fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style Export fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style Analytics fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style Doctor fill:#00bcd4,stroke:#00695c,stroke-width:2px,color:#fff
-    
-    linkStyle 0,1,2,3,4 stroke:#1565c0,stroke-width:2px
-```
-
 **Features**:
 - 🔐 User Authentication (Sign up / Login)
 - 📊 Prediction History (Track past predictions)
@@ -836,25 +724,12 @@ graph LR
 
 ### Phase 3: Advanced ML
 
-```mermaid
-graph TD
-    A["🎯 Model Ensemble<br/>Multiple variants"] --> B["Higher accuracy<br/>with voting"]
-    C["🎨 Explainability<br/>Saliency maps"] --> D["Show decision regions<br/>GradCAM visualization"]
-    E["🔬 Custom Training<br/>Fine-tune model"] --> F["Personalized accuracy<br/>User dataset"]
-    G["🌍 Multi-language<br/>10+ languages"] --> H["Global accessibility<br/>Localized UI"]
-    I["📱 Mobile App<br/>iOS/Android"] --> J["Native performance<br/>Offline capability"]
-    
-    style A fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
-    style B fill:#2196f3,stroke:#1565c0,stroke-width:2px,color:#fff
-    style C fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style D fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style E fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style F fill:#4caf50,stroke:#2e7d32,stroke-width:2px,color:#fff
-    style G fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style H fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style I fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-    style J fill:#f44336,stroke:#c62828,stroke-width:2px,color:#fff
-```
+**Enhancements**:
+- 🎯 **Model Ensemble** - Multiple variants with voting for higher accuracy
+- 🎨 **Explainability** - Saliency maps & GradCAM visualization
+- 🔬 **Custom Training** - Fine-tune model on user datasets
+- 🌍 **Multi-language** - 10+ languages with localized UI
+- 📱 **Mobile App** - iOS/Android with offline capability
 
 ### Phase 4: Enterprise Features
 
